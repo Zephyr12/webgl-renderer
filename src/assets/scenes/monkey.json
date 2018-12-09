@@ -1,0 +1,37 @@
+{
+    "children": [
+        {
+            "loc": [0,0,0],
+            "rot": [0,180,0],
+            "geometry": {
+                "mesh": "suzanne.obj",
+                "material": "suzanne.json"
+            }
+        },
+
+        {
+            "loc": [0,-2,15],
+            "sca": [100,1,100],
+            "geometry": {
+                "mesh": "uv_test.obj",
+                "material": "uv_test.json"
+            }
+        },
+
+        {
+            "rot": [0,180,0],
+            "loc": [0,1,-5],
+            "camera": {
+                "fov": 60
+            }
+        },
+
+        {
+            "rot" : [-45, 0, 0],
+            "directional_light": {
+                "color": [1,0.95,0.9],
+                "intensity": 1.25
+            }
+        }
+    ]
+}
