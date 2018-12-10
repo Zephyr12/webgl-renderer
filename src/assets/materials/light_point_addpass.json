@@ -1,0 +1,9 @@
+{
+    "shaders": {
+        "fragment": "light_point_addpass.frag",
+        "vertex"  : "unlit.vert"
+    },
+
+    "uniforms": {
+    }
+}

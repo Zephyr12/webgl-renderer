@@ -14,6 +14,7 @@ out vec2 f_texcoord;
 void main() {
     mat4 mvp = p * v * m;
     gl_Position = mvp * vec4(position,1);
-    f_normal = vec4((mvp * vec4(normal, 0)).xyz, gl_Position.z);
+    f_normal = vec4((mvp * vec4(normalize(normal), 0)).xyz, gl_Position.z);
+    f_normal.xyz = normalize(f_normal.xyz);
     f_texcoord = texcoord;
 }

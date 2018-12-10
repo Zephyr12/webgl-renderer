@@ -185,6 +185,7 @@ class SceneLoader {
         gl.bindRenderbuffer(gl.RENDERBUFFER, this.depth_buffer_tex);
         gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 800, 600);
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth_buffer_tex);
+        
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
@@ -192,11 +193,15 @@ class SceneLoader {
     async load_scene(url) {
         await mat.load_material("unlit.json");
         await mat.load_material("light_dir_addpass.json");
+        await mat.load_material("light_ambient.json");
+
+        await mesh.load_mesh("")
 
         this.monkey = null;
         let scene_json = await $.get("/assets/scenes/"+url);
         await this.post_process_scene(scene_json);
         this.scene_root = scene_json;
+
     }
 
     async post_process_scene(scene_node) {
@@ -271,7 +276,18 @@ class SceneLoader {
             }
 
             if(value instanceof Float32Array){
-                gl.uniformMatrix4fv(uniform_location, false, value);
+                if (value.length == 16) {
+                    gl.uniformMatrix4fv(uniform_location, false, value);
+                }
+                if (value.length == 2) {
+                    gl.uniform2f(uniform_location, value[0], value[1]);
+                }
+                if (value.length == 3) {
+                    gl.uniform3f(uniform_location, value[0], value[1], value[2]);
+                }
+                if (value.length == 4) {
+                    gl.uniform4f(uniform_location, value[0], value[1], value[2], value[3]);
+                }
             }
 
             if (typeof(value) === 'string') { // texture
@@ -289,11 +305,11 @@ class SceneLoader {
 
             if (typeof(value) === 'object') { // vector
                 if(value.length === 2) {
-                    gl.uniform4fv(uniform_location, value);
+                    gl.uniform2fv(uniform_location, value);
                 }
 
                 if(value.length === 3) {
-                    gl.uniform4fv(uniform_location, value);
+                    gl.uniform3fv(uniform_location, value);
                 }
 
                 if(value.length === 4) {
@@ -343,10 +359,14 @@ class SceneLoader {
         let loc = this.monkey.loc;
         let sca = this.monkey.sca;
         this.monkey.m   = mat4.fromRotationTranslationScale(mat4.create(),rot, loc, sca);
+
+        /* accumulate geometry */
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0, gl.COLOR_ATTACHMENT1, gl.COLOR_ATTACHMENT2]);
+        gl.enable(gl.DEPTH_TEST);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        gl.disable(gl.BLEND);
         this.traverse("geometry", this.scene_root, mat4.create(), (geo, m) => {
             let material = mat.mat_cache[geo.material];
             let uniforms = material.uniforms;
@@ -366,11 +386,28 @@ class SceneLoader {
 
             this.render_opaque_geometry_call(uniforms, attribute_arrays, indexes, program);
         });
-
         gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-        gl.clearColor(0.1,0.2,0.5,1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearColor(0,0,0,1);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         if (debug_framebuffer === 0) {
+            gl.enable(gl.BLEND);
+            gl.disable(gl.DEPTH_TEST);
+            gl.blendFunc(gl.ONE, gl.ONE);
+            {
+                let uniforms = {
+                    "col": new Float32Array(this.scene_root.ambient),
+                    "diffuse_tex": this.diffuse_tex
+                };
+
+                let attributes = {
+                    "position": this.quad_verts,
+                };
+
+                let program = mat.mat_cache["light_ambient.json"].program_id;
+
+                this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
+            }
+            
             this.traverse("directional_light", this.scene_root, mat4.create(), (l, m) => {
 
                 let uniforms = {
@@ -392,7 +429,6 @@ class SceneLoader {
 
                 this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
             });
-
         } else {
             let tex = null;
             if (debug_framebuffer === 1){
@@ -420,6 +456,7 @@ class SceneLoader {
 
             this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
         }
+        requestAnimationFrame(() => this.render());
     }
 }
 

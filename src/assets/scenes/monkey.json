@@ -1,11 +1,12 @@
 {
+    "ambient": [0.03333,0.06666,0.1],
     "children": [
         {
             "loc": [0,0,0],
             "rot": [0,180,0],
             "geometry": {
                 "mesh": "suzanne.obj",
-                "material": "suzanne.json"
+                "material": "suzanne_specular.json"
             }
         },
 
@@ -20,17 +21,17 @@
 
         {
             "rot": [0,180,0],
-            "loc": [0,1,-5],
+            "loc": [0,0,-5],
             "camera": {
                 "fov": 60
             }
         },
 
         {
-            "rot" : [-45, 0, 0],
+            "rot" : [-60, 0, 0],
             "directional_light": {
-                "color": [1,0.95,0.9],
-                "intensity": 1.25
+                "color": [1,1,0.8],
+                "intensity": 1.2
             }
         }
     ]
