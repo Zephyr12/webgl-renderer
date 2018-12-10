@@ -7,6 +7,6 @@
     "uniforms": {
         "color_map": "suzanne.png",
         "normal_map": "flat.png",
-        "material_map": "spec_mat.png"
+        "material_map": "porcelain_mat.png"
     }
 }

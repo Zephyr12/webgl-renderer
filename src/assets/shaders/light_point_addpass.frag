@@ -51,14 +51,17 @@ float fres_unreal(float v_dot_h, float f_0) {
 
 
 void main(){
-    vec4 d = texture(diffuse_tex, f_texcoord);
-    vec4 g = texture(gbuffer, f_texcoord);
-    vec4 m = texture(mat_buffer, f_texcoord);
+    vec2 texcoord = vec2(1.0/800.0, 1.0/600.0) * gl_FragCoord.xy;
+    vec4 d = texture(diffuse_tex, texcoord);
+    vec4 g = texture(gbuffer, texcoord);
+    vec4 m = texture(mat_buffer, texcoord);
     float roughness   = m.g;
     float metalness   = m.b;
     vec3 n = reconstruct_normal(g.xy);
     vec3 v = vec3(0,0,1);//-normalize(vec3(f_texcoord.xy * 2.0 - 1.0, 1.0 - sqrt(abs(f_texcoord.xy * 2.0 - 1.0))));
-    vec3 l_clip = (proj * view * point).xyz;
+    vec3 world_space_pos;
+    vec3 ndc_pos = vec3(texcoord.xy * 2.0 - 1.0, 1) * g.b;
+    vec3 l_clip = (proj * view * point).xyz - ndc_pos;
     float distance_from_light_squared = dot(l_clip, l_clip);
     l_clip = normalize(l_clip);
 
@@ -80,9 +83,9 @@ void main(){
 
     float fres = max(fres_unreal(dot(n, v), f_0), 0.0);
 
-    float cook_torr = (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
-    //c = vec4(vec3(cook_torr), 1.0);/*
+    float cook_torr = max(n_dot_l,0.0) * (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
+    //c = vec4(ndc_pos, 1.0);/*
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;
-    c = vec4(mix(diffuse, spec, f_0) * col * intensity, 1);
+    c = vec4(mix(diffuse, spec, f_0) * col * intensity * atten(distance_from_light_squared), 1);
     //*/
 }
