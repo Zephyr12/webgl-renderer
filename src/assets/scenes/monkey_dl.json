@@ -3,6 +3,7 @@
     "children": [
         {
             "loc": [0,0,0],
+            "rotate": [0,-3,0],
             "rot": [0,180,0],
             "geometry": {
                 "mesh": "suzanne.obj",
@@ -29,6 +30,7 @@
 
         {
             "rot" : [-60, 0, 0],
+            "rotate": [0,3,0],
             "directional_light": {
                 "color": [1,1,0.8],
                 "intensity": 1.2

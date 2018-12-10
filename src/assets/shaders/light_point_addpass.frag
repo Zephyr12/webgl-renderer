@@ -13,12 +13,16 @@ uniform sampler2D mat_buffer;
 uniform mat4 proj;
 uniform mat4 view;
 
-/* light parameters (directional) */
-uniform vec4 l;
+/* light parameters (point) */
+uniform vec4 point;
 uniform vec3 col;
 uniform float intensity;
 
 out vec4 c;
+
+float atten(float dist_squared) {
+    return 1.0 / (dist_squared + 1.0);
+}
 
 vec3 reconstruct_normal(vec2 n) {
     return vec3(n, sqrt(1.0 - dot(n, n)));
@@ -54,7 +58,10 @@ void main(){
     float metalness   = m.b;
     vec3 n = reconstruct_normal(g.xy);
     vec3 v = vec3(0,0,1);//-normalize(vec3(f_texcoord.xy * 2.0 - 1.0, 1.0 - sqrt(abs(f_texcoord.xy * 2.0 - 1.0))));
-    vec3 l_clip = (proj * view * normalize(l)).xyz;
+    vec3 l_clip = (proj * view * point).xyz;
+    float distance_from_light_squared = dot(l_clip, l_clip);
+    l_clip = normalize(l_clip);
+
     vec3 h = normalize(normalize(l_clip) + normalize(v));
 
     float n_dot_l = dot(normalize(n), normalize(l_clip));
@@ -76,6 +83,6 @@ void main(){
     float cook_torr = (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
     //c = vec4(vec3(cook_torr), 1.0);/*
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;
-    c = vec4(mix(diffuse, spec, f_0), 1);
+    c = vec4(mix(diffuse, spec, f_0) * col * intensity, 1);
     //*/
 }

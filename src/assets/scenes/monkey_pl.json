@@ -1,0 +1,66 @@
+{
+    "ambient": [0.03333,0.06666,0.1],
+    "children": [
+        {
+            "loc": [0,0,0],
+            "rot": [0,180,0],
+            "geometry": {
+                "mesh": "suzanne.obj",
+                "material": "suzanne_specular.json"
+            }
+        },
+
+        {
+            "loc": [0,-2,15],
+            "sca": [100,1,100],
+            "geometry": {
+                "mesh": "uv_test.obj",
+                "material": "uv_test.json"
+            }
+        },
+
+        {
+            "rot": [0,180,0],
+            "loc": [0,0,-5],
+            "camera": {
+                "fov": 60
+            }
+        },
+        {
+            "rotate": [0,3,0],
+            "children": [
+                {
+                    "loc": [2, 1, 0],
+                    "point_light": {
+                        "color": [1,0,0],
+                        "intensity": 2
+                    }
+                },
+
+                {
+                    "loc": [-2, 1, 0],
+                    "point_light": {
+                        "color": [0,1,0],
+                        "intensity": 2
+                    }
+                },
+
+                {
+                    "loc": [0, 1, 2],
+                    "point_light": {
+                        "color": [0,0,1],
+                        "intensity": 2
+                    }
+                },
+
+                {
+                    "loc": [0, 1, -2],
+                    "point_light": {
+                        "color": [1,1,1],
+                        "intensity": 1
+                    }
+                }
+            ]
+        }
+    ]
+}

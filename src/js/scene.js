@@ -193,9 +193,10 @@ class SceneLoader {
     async load_scene(url) {
         await mat.load_material("unlit.json");
         await mat.load_material("light_dir_addpass.json");
+        await mat.load_material("light_point_addpass.json");
         await mat.load_material("light_ambient.json");
 
-        await mesh.load_mesh("")
+        await mesh.load_mesh("unit_sphere.obj");
 
         this.monkey = null;
         let scene_json = await $.get("/assets/scenes/"+url);
@@ -337,7 +338,7 @@ class SceneLoader {
         let new_model_matrix = mat4.clone(model_matrix);
         mat4.multiply(new_model_matrix, model_matrix, scene_node.m);
         if(component in scene_node) {
-            callback(scene_node[component], new_model_matrix);
+            callback(scene_node[component], new_model_matrix, scene_node);
         }
         if(scene_node.children){
             for (var child of scene_node.children) {
@@ -350,15 +351,11 @@ class SceneLoader {
     {
         let v = null;
         let p = null;
+        gl.cullFace(gl.BACK);
         this.traverse("camera", this.scene_root, mat4.create(), (cam, mat) => {
             v = mat4.clone(mat);
             p = cam.projection_matrix;
         });
-        this.monkey.rot[1] += 3;
-        let rot = quat.fromEuler(quat.create(), this.monkey.rot[0], this.monkey.rot[1], this.monkey.rot[2]);
-        let loc = this.monkey.loc;
-        let sca = this.monkey.sca;
-        this.monkey.m   = mat4.fromRotationTranslationScale(mat4.create(),rot, loc, sca);
 
         /* accumulate geometry */
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
@@ -367,6 +364,14 @@ class SceneLoader {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.disable(gl.BLEND);
+        this.traverse("rotate", this.scene_root, mat4.create(), (rotate, m, scene_node) => {
+            vec3.add(scene_node.rot, scene_node.rot, rotate);
+            let rot = quat.fromEuler(quat.create(), scene_node.rot[0], scene_node.rot[1], scene_node.rot[2]);
+            let loc = scene_node.loc;
+            let sca = scene_node.sca;
+            scene_node.m   = mat4.fromRotationTranslationScale(mat4.create(),rot, loc, sca);
+        });
+
         this.traverse("geometry", this.scene_root, mat4.create(), (geo, m) => {
             let material = mat.mat_cache[geo.material];
             let uniforms = material.uniforms;
@@ -428,6 +433,37 @@ class SceneLoader {
                 let program = mat.mat_cache["light_dir_addpass.json"].program_id;
 
                 this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
+            });
+            /* draw a world space sphere scaled by the radius of the point light */
+            this.traverse("point_light", this.scene_root, mat4.create(), (l, m) => {
+
+
+                gl.cullFace(gl.FRONT);
+                let gmesh = mesh.meshes["unit_sphere.obj"];
+                let indexes = gmesh.indexBuffer;
+
+                let uniforms = {
+                    "diffuse_tex": this.diffuse_tex,
+                    "gbuffer": this.gbuffer_tex,
+                    "mat_buffer": this.mat_tex,
+                    "proj": p,
+                    "view": v,
+                    "point": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,0,1), m),
+                    "col": l.color,
+                    "intensity": l.intensity
+                };
+                uniforms.m = mat4.create();
+                mat4.mul(uniforms.m, m, mat4.fromScaling(mat4.create(), vec3.fromValues(l.radius,l.radius,l.radius)));
+                uniforms.v = v;
+                uniforms.p = p;
+
+                let attributes = {
+                    "position" : gmesh.vertexBuffer,
+                };
+
+                let program = mat.mat_cache["light_point_addpass.json"].program_id;
+
+                this.render_opaque_geometry_call(uniforms, attributes, indexes, program);
             });
         } else {
             let tex = null;

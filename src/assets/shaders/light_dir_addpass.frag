@@ -76,6 +76,6 @@ void main(){
     float cook_torr = (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
     //c = vec4(vec3(cook_torr), 1.0);/*
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;
-    c = vec4(mix(diffuse, spec, f_0), 1);
+    c = vec4(mix(diffuse, spec, f_0) * intensity * col, 1);
     //*/
 }
