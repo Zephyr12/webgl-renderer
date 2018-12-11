@@ -1,0 +1,7 @@
+{
+    "shaders": {
+        "fragment": "variance_depth.frag",
+        "vertex":   "unlit_transform.vert"
+    },
+    "uniforms" : {}
+}

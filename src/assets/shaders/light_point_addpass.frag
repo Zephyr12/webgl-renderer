@@ -59,7 +59,6 @@ void main(){
     float metalness   = m.b;
     vec3 n = reconstruct_normal(g.xy);
     vec3 v = vec3(0,0,1);//-normalize(vec3(f_texcoord.xy * 2.0 - 1.0, 1.0 - sqrt(abs(f_texcoord.xy * 2.0 - 1.0))));
-    vec3 world_space_pos;
     vec3 ndc_pos = vec3(texcoord.xy * 2.0 - 1.0, 1) * g.b;
     vec3 l_clip = (proj * view * point).xyz - ndc_pos;
     float distance_from_light_squared = dot(l_clip, l_clip);

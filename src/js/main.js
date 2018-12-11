@@ -36,4 +36,9 @@ $(document).ready(() => {
     mesh = new MeshLoader();
     scene = new SceneLoader();
 
+    $("#load_button").on("click", async () => {
+        await scene.load_scene($("#select").val());
+        scene.render();
+    });
+
 });

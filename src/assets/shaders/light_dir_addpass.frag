@@ -18,6 +18,10 @@ uniform vec4 l;
 uniform vec3 col;
 uniform float intensity;
 
+uniform mat4 shadow_map_model;
+uniform mat4 shadow_map_projection;
+uniform sampler2D shadow_map;
+
 out vec4 c;
 
 vec3 reconstruct_normal(vec2 n) {
@@ -57,6 +61,11 @@ void main(){
     vec3 l_clip = (proj * view * normalize(l)).xyz;
     vec3 h = normalize(normalize(l_clip) + normalize(v));
 
+    vec4 light_space_pos =  (inverse(proj * view) * vec4(vec3(f_texcoord.xy * 2.0 - 1.0, 1) * g.b, 1));
+
+  //  light_space_pos = shadow_map_projection * shadow_map_model * light_space_pos;
+    vec2 shadow_sample = texture(shadow_map, f_texcoord).xy;
+
     float n_dot_l = dot(normalize(n), normalize(l_clip));
     float n_dot_h = dot(normalize(n), normalize(h));
     float n_dot_v = dot(normalize(n), normalize(v));
@@ -74,7 +83,7 @@ void main(){
     float fres = max(fres_unreal(dot(n, v), f_0), 0.0);
 
     float cook_torr = (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
-    //c = vec4(vec3(cook_torr), 1.0);/*
+    //c = vec4(vec3(shadow_sample.xy, 0.0), 1.0);/*
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;
     c = vec4(mix(diffuse, spec, f_0) * intensity * col, 1);
     //*/

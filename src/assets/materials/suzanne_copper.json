@@ -5,8 +5,8 @@
     },
 
     "uniforms": {
-        "color_map": "suzanne.png",
+        "color_map": "suzanne_copper.png",
         "normal_map": "flat.png",
-        "material_map": "porcelain_mat.png"
+        "material_map": "suzanne_copper_mat.png"
     }
 }

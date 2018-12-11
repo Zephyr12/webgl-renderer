@@ -2,11 +2,32 @@
     "ambient": [0.03333,0.06666,0.1],
     "children": [
         {
-            "loc": [0,0,-2],
+            "loc": [4,0,0],
+            "rotate": [1,1,0],
             "rot": [0,180,0],
             "geometry": {
                 "mesh": "suzanne.obj",
-                "material": "suzanne_specular.json"
+                "material": "suzanne_copper.json"
+            }
+        },
+
+        {
+            "loc": [0,0,0],
+            "rotate": [0,-1,0],
+            "rot": [0,180,0],
+            "geometry": {
+                "mesh": "suzanne.obj",
+                "material": "suzanne_painted.json"
+            }
+        },
+
+        {
+            "loc": [-4,0,0],
+            "rotate": [-1,-1,0],
+            "rot": [0,180,0],
+            "geometry": {
+                "mesh": "suzanne.obj",
+                "material": "suzanne_cardboard.json"
             }
         },
 
@@ -31,10 +52,31 @@
             "rotate": [0,3,0],
             "children": [
                 {
-                    "loc": [3, -1, 0],
+                    "loc": [7, 0, 0],
+                    "point_light": {
+                        "color": [0.8,0.8,1],
+                        "intensity": 100
+                    }
+                },
+                {
+                    "loc": [0, 0, 7],
+                    "point_light": {
+                        "color": [1,0.8,0.1],
+                        "intensity": 7
+                    }
+                },
+                {
+                    "loc": [-7, 0, 0],
                     "point_light": {
                         "color": [1,1,1],
-                        "intensity": 5
+                        "intensity": 7
+                    }
+                },
+                {
+                    "loc": [0, 0, -7],
+                    "point_light": {
+                        "color": [1,0.7,1],
+                        "intensity": 7
                     }
                 }
             ]

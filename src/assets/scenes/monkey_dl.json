@@ -1,16 +1,35 @@
 {
-    "ambient": [0.03333,0.06666,0.1],
+    "ambient": [0.15,0.15,0.15],
     "children": [
         {
-            "loc": [0,0,0],
-            "rotate": [0,-3,0],
+            "loc": [4,0,0],
+            "rotate": [0,-1,0],
             "rot": [0,180,0],
             "geometry": {
                 "mesh": "suzanne.obj",
-                "material": "suzanne_specular.json"
+                "material": "suzanne_copper.json"
             }
         },
 
+        {
+            "loc": [0,0,0],
+            "rotate": [0,-1,0],
+            "rot": [0,180,0],
+            "geometry": {
+                "mesh": "suzanne.obj",
+                "material": "suzanne_painted.json"
+            }
+        },
+
+        {
+            "loc": [-4,0,0],
+            "rotate": [0,-1,0],
+            "rot": [0,180,0],
+            "geometry": {
+                "mesh": "suzanne.obj",
+                "material": "suzanne_cardboard.json"
+            }
+        },
         {
             "loc": [0,-2,15],
             "sca": [100,1,100],
@@ -22,18 +41,30 @@
 
         {
             "rot": [0,180,0],
-            "loc": [0,0,-5],
             "camera": {
                 "fov": 60
-            }
+            },
+            "loc": [0,0,-8]
         },
 
         {
-            "rot" : [-60, 0, 0],
-            "rotate": [0,3,0],
+            "rot": [60,30,0],
+            "loc": [0,0,0],
             "directional_light": {
-                "color": [1,1,0.8],
-                "intensity": 1.2
+                "color": [1,1,1],
+                "intensity": 1.2,
+                "shadow_radius": 10,
+                "shadow_resolution": 256
+            }
+        },
+        {
+            "rot": [-60,-90,0],
+            "loc": [0,0,0],
+            "directional_light": {
+                "color": [0.1,0.1,0.1],
+                "intensity": 0.3,
+                "shadow_radius": 10,
+                "shadow_resolution": 256
             }
         }
     ]

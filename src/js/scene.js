@@ -195,7 +195,7 @@ class SceneLoader {
         await mat.load_material("light_dir_addpass.json");
         await mat.load_material("light_point_addpass.json");
         await mat.load_material("light_ambient.json");
-
+        await mat.load_material("variance_depth.json");
         await mesh.load_mesh("unit_sphere.obj");
 
         this.monkey = null;
@@ -236,10 +236,24 @@ class SceneLoader {
         }
 
         if (scene_node.directional_light) {
-            scene_node.directional_light = new DirectionalLight(
-                scene_node.directional_light.color,
-                scene_node.directional_light.intensity);
-            this.monkey = scene_node;
+            if (scene_node.directional_light.shadow_radius) {
+                scene_node.directional_light = new DirectionalLight(
+                    scene_node.directional_light.color,
+                    scene_node.directional_light.intensity,
+                    true,
+                    scene_node.directional_light.shadow_radius,
+                    scene_node.directional_light.shadow_resolution
+                );
+            }
+            else {
+                scene_node.directional_light = new DirectionalLight(
+                    scene_node.directional_light.color,
+                    scene_node.directional_light.intensity,
+                    false,
+                    0,
+                    2
+                );
+            }
         }
         if (scene_node.children){
             for (var child of scene_node.children){
@@ -380,6 +394,7 @@ class SceneLoader {
             uniforms.m = m;
             uniforms.v = v;
             uniforms.p = p;
+
             let gmesh = mesh.meshes[geo.mesh];
             let indexes = gmesh.indexBuffer;
 
@@ -391,10 +406,10 @@ class SceneLoader {
 
             this.render_opaque_geometry_call(uniforms, attribute_arrays, indexes, program);
         });
-        gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-        gl.clearColor(0,0,0,1);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         if (debug_framebuffer === 0) {
+            gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+            gl.clearColor(0,0,0,1);
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             gl.enable(gl.BLEND);
             gl.disable(gl.DEPTH_TEST);
             gl.blendFunc(gl.ONE, gl.ONE);
@@ -414,16 +429,25 @@ class SceneLoader {
             }
             
             this.traverse("directional_light", this.scene_root, mat4.create(), (l, m) => {
-
+                if (l.shadow) {
+                    l.update_shadow_map(m);
+                    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+                    gl.enable(gl.BLEND);
+                    gl.disable(gl.DEPTH_TEST);
+                    gl.blendFunc(gl.ONE, gl.ONE);
+                }
                 let uniforms = {
                     "diffuse_tex": this.diffuse_tex,
                     "gbuffer": this.gbuffer_tex,
                     "mat_buffer": this.mat_tex,
                     "proj": p,
                     "view": v,
-                    "l": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,1,0), m),
+                    "l": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,-1,0), m),
                     "col": l.color,
-                    "intensity": l.intensity
+                    "intensity": l.intensity,
+                    "shadow_map_model": m,
+                    "shadow_map_projection": l.projection_matrix,
+                    "shadow_map": l.shadow_tex
                 };
 
                 let attributes = {
@@ -431,7 +455,6 @@ class SceneLoader {
                 };
 
                 let program = mat.mat_cache["light_dir_addpass.json"].program_id;
-
                 this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
             });
             /* draw a world space sphere scaled by the radius of the point light */
@@ -476,7 +499,7 @@ class SceneLoader {
             }
 
             if (debug_framebuffer === 3) {
-                tex = this.mat_tex;
+                tex = this.shadow_map;
             }
 
             let uniforms = {
@@ -492,6 +515,7 @@ class SceneLoader {
 
             this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
         }
+
         requestAnimationFrame(() => this.render());
     }
 }

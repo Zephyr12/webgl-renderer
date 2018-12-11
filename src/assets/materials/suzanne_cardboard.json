@@ -1,0 +1,12 @@
+{
+    "shaders": {
+        "fragment": "g_prepass.frag",
+        "vertex"  : "g_prepass.vert"
+    },
+
+    "uniforms": {
+        "color_map": "suzanne_cardboard.png",
+        "normal_map": "flat.png",
+        "material_map": "suzanne_cardboard_mat.png"
+    }
+}
