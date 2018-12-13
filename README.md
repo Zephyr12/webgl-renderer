@@ -1,4 +1,11 @@
+# How to Use
+
+* Navigate to the `index.html` file in your web browser.
+* Select the scene you want to load and click the render button
+* If nothing happens click the render button again
+
 # Sources
+ 
 * Deferred Rendering:           http://www.codinglabs.net/tutorial_simple_def_rendering.aspx
 * Cook-Torrance Broad Strokes:  http://www.codinglabs.net/article_physically_based_rendering_cook_torrance.aspx
 * Realtime Hard Shadows:        https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping

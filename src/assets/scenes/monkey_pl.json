@@ -13,7 +13,7 @@
 
         {
             "loc": [0,0,0],
-            "rotate": [0,-1,0],
+            "rotate": [0,0,0],
             "rot": [0,180,0],
             "geometry": {
                 "mesh": "suzanne.obj",
@@ -48,11 +48,11 @@
             }
         },
         {
-            "loc": [0,0,1],
-            "rotate": [0,3,0],
+            "loc": [0,3,1],
+            "rotate": [0,1,0],
             "children": [
                 {
-                    "loc": [7, 0, 0],
+                    "loc": [9, 0, 0],
                     "point_light": {
                         "color": [0.8,0.8,1],
                         "intensity": 100
@@ -60,14 +60,14 @@
                 },
                 {
                     "loc": [0, 0, 7],
-                    "point_light": {
+                    "point_light_": {
                         "color": [1,0.8,0.1],
                         "intensity": 7
                     }
                 },
                 {
                     "loc": [-7, 0, 0],
-                    "point_light": {
+                    "point_light_": {
                         "color": [1,1,1],
                         "intensity": 7
                     }
@@ -75,7 +75,7 @@
                 {
                     "loc": [0, 0, -7],
                     "point_light": {
-                        "color": [1,0.7,1],
+                        "color_": [1,0.7,1],
                         "intensity": 7
                     }
                 }

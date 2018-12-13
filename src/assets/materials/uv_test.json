@@ -7,6 +7,6 @@
     "uniforms": {
         "color_map": "uv_grid.png",
         "normal_map": "flat.png",
-        "material_map": "diffuse_mat.png"
+        "material_map": "test_smooth_glossy.png"
     }
 }

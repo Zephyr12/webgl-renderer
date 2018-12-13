@@ -33,11 +33,11 @@ class DirectionalLight {
         this.shadow = shadow;
         this.shadow_tex = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, this.shadow_tex);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, shadow_res, shadow_res, 0, gl.RGBA, gl.FLOAT, null);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, shadow_res, shadow_res, 0, gl.RGBA, gl.FLOAT, null);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.shadow_tex, 0);
 
         this.depth_buffer_tex = gl.createRenderbuffer();
@@ -46,24 +46,32 @@ class DirectionalLight {
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadow_fb);
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth_buffer_tex);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
-        gl.clearColor(100.0, 10000.0, 0.0, 1.0);
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         this.shadow_res = shadow_res;
         this.projection_matrix = mat4.create();
+        gl.generateMipmap(gl.TEXTURE_2D);
 
         mat4.ortho(this.projection_matrix, 
             -shadow_size, shadow_size,
             -shadow_size, shadow_size,
-            0.1, 100);
+            0, 100);
     }
 
     update_shadow_map(v) {
+        /*
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0,0,800,600);
+        gl.drawBuffers([gl.BACK]);
+        /*/
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.shadow_fb);
         gl.viewport(0,0,this.shadow_res, this.shadow_res);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
-        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        /**/
+        gl.clearColor(1.0, 1.0, 1.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        gl.enable(gl.DEPTH_TEST)
+        gl.enable(gl.DEPTH_TEST);
+        gl.cullFace(gl.FRONT);
         gl.disable(gl.BLEND);
 
         scene.traverse("geometry", scene.scene_root, mat4.create(), (geo, m) => {
@@ -85,6 +93,9 @@ class DirectionalLight {
 
             scene.render_opaque_geometry_call(uniforms, attribute_arrays, indexes, program);
         });
+        gl.bindTexture(gl.TEXTURE_2D, this.shadow_tex);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.cullFace(gl.BACK);
         gl.viewport(0,0,800, 600);
     }
 }

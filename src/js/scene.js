@@ -186,6 +186,20 @@ class SceneLoader {
         gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 800, 600);
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth_buffer_tex);
         
+        this.accumulation_buffer = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.accumulation_buffer);
+
+        this.color_buffer = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, this.color_buffer);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, 800, 600, 0, gl.RGBA, gl.FLOAT, null);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.color_buffer, 0);
+        gl.clearColor(0,0,0,1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
@@ -196,6 +210,7 @@ class SceneLoader {
         await mat.load_material("light_point_addpass.json");
         await mat.load_material("light_ambient.json");
         await mat.load_material("variance_depth.json");
+        await mat.load_material("postprocess.json");
         await mesh.load_mesh("unit_sphere.obj");
 
         this.monkey = null;
@@ -368,7 +383,16 @@ class SceneLoader {
         gl.cullFace(gl.BACK);
         this.traverse("camera", this.scene_root, mat4.create(), (cam, mat) => {
             v = mat4.clone(mat);
+            mat4.invert(v,v);
             p = cam.projection_matrix;
+        });
+
+        this.traverse("rotate", this.scene_root, mat4.create(), (rotate, m, scene_node) => {
+            vec3.add(scene_node.rot, scene_node.rot, rotate);
+            let rot = quat.fromEuler(quat.create(), scene_node.rot[0], scene_node.rot[1], scene_node.rot[2]);
+            let loc = scene_node.loc;
+            let sca = scene_node.sca;
+            scene_node.m   = mat4.fromRotationTranslationScale(mat4.create(),rot, loc, sca);
         });
 
         /* accumulate geometry */
@@ -378,13 +402,6 @@ class SceneLoader {
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
         gl.disable(gl.BLEND);
-        this.traverse("rotate", this.scene_root, mat4.create(), (rotate, m, scene_node) => {
-            vec3.add(scene_node.rot, scene_node.rot, rotate);
-            let rot = quat.fromEuler(quat.create(), scene_node.rot[0], scene_node.rot[1], scene_node.rot[2]);
-            let loc = scene_node.loc;
-            let sca = scene_node.sca;
-            scene_node.m   = mat4.fromRotationTranslationScale(mat4.create(),rot, loc, sca);
-        });
 
         this.traverse("geometry", this.scene_root, mat4.create(), (geo, m) => {
             let material = mat.mat_cache[geo.material];
@@ -406,8 +423,10 @@ class SceneLoader {
 
             this.render_opaque_geometry_call(uniforms, attribute_arrays, indexes, program);
         });
+
         if (debug_framebuffer === 0) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+            gl.bindFramebuffer(gl.FRAMEBUFFER,this.accumulation_buffer);
+            gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             gl.enable(gl.BLEND);
@@ -429,23 +448,26 @@ class SceneLoader {
             }
             
             this.traverse("directional_light", this.scene_root, mat4.create(), (l, m) => {
+                let model = mat4.clone(m);
+                mat4.invert(model, model);
                 if (l.shadow) {
-                    l.update_shadow_map(m);
-                    gl.bindFramebuffer(gl.FRAMEBUFFER,null);
-                    gl.enable(gl.BLEND);
-                    gl.disable(gl.DEPTH_TEST);
-                    gl.blendFunc(gl.ONE, gl.ONE);
+                    l.update_shadow_map(model);
                 }
+                gl.bindFramebuffer(gl.FRAMEBUFFER,this.accumulation_buffer);
+                gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+                gl.enable(gl.BLEND);
+                gl.disable(gl.DEPTH_TEST);
+                gl.blendFunc(gl.ONE, gl.ONE);
                 let uniforms = {
                     "diffuse_tex": this.diffuse_tex,
                     "gbuffer": this.gbuffer_tex,
                     "mat_buffer": this.mat_tex,
                     "proj": p,
                     "view": v,
-                    "l": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,-1,0), m),
+                    "l": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,-1,0), model),
                     "col": l.color,
                     "intensity": l.intensity,
-                    "shadow_map_model": m,
+                    "shadow_map_model": model,
                     "shadow_map_projection": l.projection_matrix,
                     "shadow_map": l.shadow_tex
                 };
@@ -459,19 +481,19 @@ class SceneLoader {
             });
             /* draw a world space sphere scaled by the radius of the point light */
             this.traverse("point_light", this.scene_root, mat4.create(), (l, m) => {
-
-
                 gl.cullFace(gl.FRONT);
                 let gmesh = mesh.meshes["unit_sphere.obj"];
                 let indexes = gmesh.indexBuffer;
-
+                let model = mat4.clone(m);
+                let point = vec4.fromValues(0,0,0,1);
+                vec4.transformMat4(point, point, m);
                 let uniforms = {
                     "diffuse_tex": this.diffuse_tex,
                     "gbuffer": this.gbuffer_tex,
                     "mat_buffer": this.mat_tex,
                     "proj": p,
                     "view": v,
-                    "point": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,0,1), m),
+                    "point": point,
                     "col": l.color,
                     "intensity": l.intensity
                 };
@@ -488,6 +510,23 @@ class SceneLoader {
 
                 this.render_opaque_geometry_call(uniforms, attributes, indexes, program);
             });
+            /* opaque geometry done */
+
+            /* post-processing done */
+            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+            gl.bindTexture(gl.TEXTURE_2D, this.color_buffer);
+            let uniforms = {
+                "diffuse_tex": this.color_buffer,
+            };
+
+            let attributes = {
+                "position": this.quad_verts,
+            };
+
+
+            let program = mat.mat_cache["postprocess.json"].program_id;
+
+            this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
         } else {
             let tex = null;
             if (debug_framebuffer === 1){

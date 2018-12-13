@@ -1,0 +1,9 @@
+{
+    "shaders": {
+        "fragment": "postprocess.frag",
+        "vertex"  : "unlit.vert"
+    },
+
+    "uniforms": {
+    }
+}

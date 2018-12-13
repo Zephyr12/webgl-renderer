@@ -24,6 +24,21 @@ uniform sampler2D shadow_map;
 
 out vec4 c;
 
+float variance_filter(vec2 moments, float depth, float n_dot_l){
+    // https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch08.html
+    float g_MinVariance = 1.0;
+    float t = 1.0 - depth;
+    // One-tailed inequality valid if t > Moments.x
+    float p = float(t <= moments.x);
+    // Compute variance.
+    float variance = moments.y - (moments.x*moments.x);
+    variance = max(variance, g_MinVariance);
+    // Compute probabilistic upper bound.
+    float d = t - moments.x;
+    float p_max = variance / (variance + d*d);
+    return max(p, p_max);
+}
+
 vec3 reconstruct_normal(vec2 n) {
     return vec3(n, sqrt(1.0 - dot(n, n)));
 }
@@ -57,14 +72,24 @@ void main(){
     float roughness   = m.g;
     float metalness   = m.b;
     vec3 n = reconstruct_normal(g.xy);
-    vec3 v = vec3(0,0,1);//-normalize(vec3(f_texcoord.xy * 2.0 - 1.0, 1.0 - sqrt(abs(f_texcoord.xy * 2.0 - 1.0))));
     vec3 l_clip = (proj * view * normalize(l)).xyz;
+
+    vec4 world_space_pos =  (inverse(proj) * vec4(f_texcoord.xy * 2.0 - 1.0, 0, 1));
+    world_space_pos.xyz *= g.b;
+    world_space_pos.z = -g.b;
+    world_space_pos.w = 1.0;
+    vec4 v_world = world_space_pos;
+    //vec3 v = -normalize(v_world.xyz);
+    vec2 texcoord_n = f_texcoord * 2.0 - 1.0;
+    //vec3 v = -normalize(vec3(texcoord_n, -sqrt(max(0.0, 1.0-dot(texcoord_n.xy, texcoord_n.xy)))));//-normalize(v_world.xyz);
+    vec3 v = -normalize(vec3(texcoord_n, -1));
     vec3 h = normalize(normalize(l_clip) + normalize(v));
-
-    vec4 light_space_pos =  (inverse(proj * view) * vec4(vec3(f_texcoord.xy * 2.0 - 1.0, 1) * g.b, 1));
-
-  //  light_space_pos = shadow_map_projection * shadow_map_model * light_space_pos;
-    vec2 shadow_sample = texture(shadow_map, f_texcoord).xy;
+    world_space_pos = inverse(view) * world_space_pos;
+    vec4 light_space_pos = shadow_map_projection * (shadow_map_model) * world_space_pos;
+    //light_space_pos.z = light_space_pos.z * 0.5 + 0.5;
+    vec2 shadow_sample = texture(shadow_map,  light_space_pos.xy * 0.5 + 0.5, 2.0).xy;
+    light_space_pos.z  *= 0.5;
+    light_space_pos.z  += 0.5;
 
     float n_dot_l = dot(normalize(n), normalize(l_clip));
     float n_dot_h = dot(normalize(n), normalize(h));
@@ -83,8 +108,11 @@ void main(){
     float fres = max(fres_unreal(dot(n, v), f_0), 0.0);
 
     float cook_torr = (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
-    //c = vec4(vec3(shadow_sample.xy, 0.0), 1.0);/*
+    // shadow_sample.x * 100.0
+    //c = vec4(sign(max((shadow_sample.x - light_space_pos.z + 0.01),0.0)),0,0, 1.0);
+    //float shaded = 1.0 - clamp((light_space_pos.z <= shadow_sample.x + 0.005 ? 0.0 : 1.0),0.0, 1.0);
+    float shaded = variance_filter(shadow_sample, light_space_pos.z, n_dot_l);
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;
-    c = vec4(mix(diffuse, spec, f_0) * intensity * col, 1);
+    c = vec4(mix(diffuse, spec, f_0) * intensity * col * shaded, 1);
     //*/
 }

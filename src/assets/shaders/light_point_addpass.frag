@@ -58,11 +58,20 @@ void main(){
     float roughness   = m.g;
     float metalness   = m.b;
     vec3 n = reconstruct_normal(g.xy);
-    vec3 v = vec3(0,0,1);//-normalize(vec3(f_texcoord.xy * 2.0 - 1.0, 1.0 - sqrt(abs(f_texcoord.xy * 2.0 - 1.0))));
-    vec3 ndc_pos = vec3(texcoord.xy * 2.0 - 1.0, 1) * g.b;
-    vec3 l_clip = (proj * view * point).xyz - ndc_pos;
-    float distance_from_light_squared = dot(l_clip, l_clip);
-    l_clip = normalize(l_clip);
+    vec4 world_space_pos =  (inverse(proj) * vec4(texcoord.xy * 2.0 - 1.0, 0, 1));
+    world_space_pos.xyz *= g.b;
+    vec4 v_world = world_space_pos / world_space_pos.w;
+    world_space_pos.w = 1.0;
+    vec2 texcoord_n = texcoord * 2.0 - 1.0;
+    float t = length(texcoord);
+    vec3 v = -normalize(vec3(texcoord_n, -1));//-normalize(v_world.xyz);
+    world_space_pos = inverse(view) * world_space_pos;
+    vec4 l_world = point - world_space_pos;
+    float distance_from_light_squared = dot(l_world, l_world);
+    l_world = normalize(l_world);
+
+    vec3 l_clip = (proj * view * (l_world)).xyz;
+    l_clip.z *= -1.0;
 
     vec3 h = normalize(normalize(l_clip) + normalize(v));
 
@@ -78,12 +87,12 @@ void main(){
 
     float dist = max(dist_ggx(dot(n, h), alpha), 0.0);
 
-    float f_0 = mix(0.1, 0.8, metalness);
+    float f_0 = mix(0.04, 0.8, metalness);
 
-    float fres = max(fres_unreal(dot(n, v), f_0), 0.0);
+    float fres = min(max(fres_unreal(dot(n, h), f_0), 0.0), 1.0);
 
     float cook_torr = max(n_dot_l,0.0) * (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
-    //c = vec4(ndc_pos, 1.0);/*
+   // c = vec4(vec3(v), 1.0);/*
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;
     c = vec4(mix(diffuse, spec, f_0) * col * intensity * atten(distance_from_light_squared), 1);
     //*/
