@@ -6,6 +6,7 @@ $(document).ready(() => {
      * An init function, essentially initalize OpenGL here
      */
 
+
     let canvas = $("canvas")[0];
     gl = canvas.getContext('webgl2');
     if (gl === null) {

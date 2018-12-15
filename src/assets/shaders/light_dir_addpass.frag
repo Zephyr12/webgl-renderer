@@ -26,7 +26,7 @@ out vec4 c;
 
 float variance_filter(vec2 moments, float depth, float n_dot_l){
     // https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch08.html
-    float g_MinVariance = 1.0;
+    float g_MinVariance = 5.0;
     float t = 1.0 - depth;
     // One-tailed inequality valid if t > Moments.x
     float p = float(t <= moments.x);

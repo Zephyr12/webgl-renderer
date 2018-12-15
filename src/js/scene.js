@@ -186,20 +186,6 @@ class SceneLoader {
         gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, 800, 600);
         gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, this.depth_buffer_tex);
         
-        this.accumulation_buffer = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.accumulation_buffer);
-
-        this.color_buffer = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, this.color_buffer);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA16F, 800, 600, 0, gl.RGBA, gl.FLOAT, null);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, this.color_buffer, 0);
-        gl.clearColor(0,0,0,1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     }
@@ -245,9 +231,22 @@ class SceneLoader {
         }
 
         if (scene_node.point_light) {
-            scene_node.point_light = new PointLight(
-                scene_node.point_light.color,
-                scene_node.point_light.intensity);
+            if (scene_node.point_light.shadow_res) {
+                scene_node.point_light = new PointLight(
+                    scene_node.point_light.color,
+                    scene_node.point_light.intensity,
+                    true,
+                    scene_node.point_light.shadow_res
+                );
+            } else {
+                scene_node.point_light = new PointLight(
+                    scene_node.point_light.color,
+                    scene_node.point_light.intensity,
+                    false,
+                    2
+                );
+            }
+            
         }
 
         if (scene_node.directional_light) {
@@ -300,7 +299,11 @@ class SceneLoader {
             if(value instanceof WebGLTexture) {
                 gl.uniform1i(uniform_location, texture_unit);
                 gl.activeTexture(this.get_texture_unit(texture_unit));
-                gl.bindTexture(gl.TEXTURE_2D, value);
+                if ("is_cube" in value) {
+                    gl.bindTexture(gl.TEXTURE_CUBE_MAP, value);
+                } else {
+                    gl.bindTexture(gl.TEXTURE_2D, value);
+                }
                 texture_unit += 1;
                 continue;
             }
@@ -425,8 +428,8 @@ class SceneLoader {
         });
 
         if (debug_framebuffer === 0) {
-            gl.bindFramebuffer(gl.FRAMEBUFFER,this.accumulation_buffer);
-            gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+            gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+            gl.drawBuffers([gl.BACK]);
             gl.clearColor(0,0,0,1);
             gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
             gl.enable(gl.BLEND);
@@ -453,8 +456,8 @@ class SceneLoader {
                 if (l.shadow) {
                     l.update_shadow_map(model);
                 }
-                gl.bindFramebuffer(gl.FRAMEBUFFER,this.accumulation_buffer);
-                gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
+                gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+                gl.drawBuffers([gl.BACK]);
                 gl.enable(gl.BLEND);
                 gl.disable(gl.DEPTH_TEST);
                 gl.blendFunc(gl.ONE, gl.ONE);
@@ -481,11 +484,20 @@ class SceneLoader {
             });
             /* draw a world space sphere scaled by the radius of the point light */
             this.traverse("point_light", this.scene_root, mat4.create(), (l, m) => {
-                gl.cullFace(gl.FRONT);
                 let gmesh = mesh.meshes["unit_sphere.obj"];
                 let indexes = gmesh.indexBuffer;
                 let model = mat4.clone(m);
                 let point = vec4.fromValues(0,0,0,1);
+                mat4.invert(model, model);
+                if (l.shadow) {
+                    l.update_shadow_map(model);
+                }
+                gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+                gl.drawBuffers([gl.BACK]);
+                gl.enable(gl.BLEND);
+                gl.cullFace(gl.FRONT);
+                gl.disable(gl.DEPTH_TEST);
+                gl.blendFunc(gl.ONE, gl.ONE);
                 vec4.transformMat4(point, point, m);
                 let uniforms = {
                     "diffuse_tex": this.diffuse_tex,
@@ -495,7 +507,10 @@ class SceneLoader {
                     "view": v,
                     "point": point,
                     "col": l.color,
-                    "intensity": l.intensity
+                    "intensity": l.intensity,
+                    "shadow_map_model": model,
+                    "shadow_map_projection": l.projection_matrix,
+                    "shadow_cube": l.shadow_cube
                 };
                 uniforms.m = mat4.create();
                 mat4.mul(uniforms.m, m, mat4.fromScaling(mat4.create(), vec3.fromValues(l.radius,l.radius,l.radius)));
@@ -511,22 +526,6 @@ class SceneLoader {
                 this.render_opaque_geometry_call(uniforms, attributes, indexes, program);
             });
             /* opaque geometry done */
-
-            /* post-processing done */
-            gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-            gl.bindTexture(gl.TEXTURE_2D, this.color_buffer);
-            let uniforms = {
-                "diffuse_tex": this.color_buffer,
-            };
-
-            let attributes = {
-                "position": this.quad_verts,
-            };
-
-
-            let program = mat.mat_cache["postprocess.json"].program_id;
-
-            this.render_opaque_geometry_call(uniforms, attributes, this.indexes, program);
         } else {
             let tex = null;
             if (debug_framebuffer === 1){
