@@ -54,30 +54,17 @@
                 {
                     "loc": [9, 0, 0],
                     "point_light": {
-                        "color": [0.8,0.8,1],
+                        "color": [0.5,1,1],
                         "shadow_res": 256,
-                        "intensity": 100
-                    }
-                },
-                {
-                    "loc": [0, 0, 7],
-                    "point_light_": {
-                        "color": [1,0.8,0.1],
-                        "intensity": 7
+                        "intensity": 50
                     }
                 },
                 {
                     "loc": [-7, 0, 0],
-                    "point_light_": {
-                        "color": [1,1,1],
-                        "intensity": 7
-                    }
-                },
-                {
-                    "loc": [0, 0, -7],
                     "point_light": {
-                        "color_": [1,0.7,1],
-                        "intensity": 7
+                        "color": [1,0.7,0.5],
+                        "shadow_res": 256,
+                        "intensity": 50
                     }
                 }
             ]

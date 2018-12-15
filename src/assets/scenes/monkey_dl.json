@@ -61,11 +61,13 @@
             }]
         },
         {
-            "rot": [-60,-90,0],
-            "loc": [0,0,0],
-            "directional_light_l": {
+            "rot": [-60, 60,0],
+            "loc": [0,8,8],
+            "directional_light": {
                 "color": [1,1,1],
-                "intensity": 0.3
+                "intensity": 1.2,
+                "shadow_radius": 10,
+                "shadow_resolution": 1024
             }
         }
     ]
