@@ -461,13 +461,16 @@ class SceneLoader {
                 gl.enable(gl.BLEND);
                 gl.disable(gl.DEPTH_TEST);
                 gl.blendFunc(gl.ONE, gl.ONE);
+                let l_vector = vec4.create();
+
+                vec4.transformMat4(l_vector, vec4.fromValues(0,0,1,0), m);
                 let uniforms = {
                     "diffuse_tex": this.diffuse_tex,
                     "gbuffer": this.gbuffer_tex,
                     "mat_buffer": this.mat_tex,
                     "proj": p,
                     "view": v,
-                    "l": vec4.transformMat4(vec4.create(), vec4.fromValues(0,0,-1,0), model),
+                    "l": l_vector,
                     "col": l.color,
                     "intensity": l.intensity,
                     "shadow_map_model": model,

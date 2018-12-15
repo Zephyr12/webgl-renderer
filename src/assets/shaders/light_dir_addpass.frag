@@ -72,7 +72,7 @@ void main(){
     float roughness   = m.g;
     float metalness   = m.b;
     vec3 n = reconstruct_normal(g.xy);
-    vec3 l_clip = (proj * view * normalize(l)).xyz;
+    vec3 l_clip = normalize((proj * view * normalize(l)).xyz);
 
     vec4 world_space_pos =  (inverse(proj) * vec4(f_texcoord.xy * 2.0 - 1.0, 0, 1));
     world_space_pos.xyz *= g.b;
@@ -109,7 +109,7 @@ void main(){
 
     float cook_torr = (geo * dist * fres) / (2.0 * dot(n, l_clip) * dot(n, v));
     // shadow_sample.x * 100.0
-    //c = vec4(sign(max((shadow_sample.x - light_space_pos.z + 0.01),0.0)),0,0, 1.0);
+//    c = vec4(l_clip, 1.0);/*
     //float shaded = 1.0 - clamp((light_space_pos.z <= shadow_sample.x + 0.005 ? 0.0 : 1.0),0.0, 1.0);
     float shaded = variance_filter(shadow_sample, light_space_pos.z, n_dot_l);
     vec3 spec = mix(vec3(1), d.xyz, metalness) * cook_torr;

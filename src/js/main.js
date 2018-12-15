@@ -42,4 +42,21 @@ $(document).ready(() => {
         scene.render();
     });
 
+    document.addEventListener('keydown', function(event) {
+        let rot_y = 0;
+        if(event.keyCode == 39) {
+            rot_y -= 1;
+        }
+        else if(event.keyCode == 37) {
+            rot_y += 1;
+        }
+        scene.traverse("scene", scene.scene_root, mat4.create(), (scene, m, scene_node) => {
+            vec3.add(scene_node.rot, scene_node.rot, vec3.fromValues(0, rot_y * 20, 0));
+            let rot = quat.fromEuler(quat.create(), scene_node.rot[0], scene_node.rot[1], scene_node.rot[2]);
+            let loc = scene_node.loc;
+            let sca = scene_node.sca;
+            scene_node.m   = mat4.fromRotationTranslationScale(mat4.create(),rot, loc, sca);
+        });
+    });
+
 });

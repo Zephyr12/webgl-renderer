@@ -2,73 +2,85 @@
     "ambient": [0.15,0.15,0.15],
     "children": [
         {
-            "loc": [4,0,0],
-            "rotate": [0,-1,0],
-            "rot": [0,180,0],
-            "geometry": {
-                "mesh": "suzanne.obj",
-                "material": "suzanne_copper.json"
-            }
-        },
+            "scene": "root",
+            "rot": [0,0,0],
+            "children": [
+            {
+                "loc": [4,0,0],
+                "rotate": [0,-1,0],
+                "rot": [0,180,0],
+                "geometry": {
+                    "mesh": "suzanne.obj",
+                    "material": "suzanne_copper.json"
+                }
+            },
 
-        {
-            "loc": [0,0,0],
-            "rotate": [0,-1,0],
-            "rot": [0,180,0],
-            "geometry": {
-                "mesh": "suzanne.obj",
-                "material": "suzanne_painted.json"
-            }
-        },
+            {
+                "loc": [0,0,0],
+                "rotate": [0,-1,0],
+                "rot": [0,180,0],
+                "geometry": {
+                    "mesh": "suzanne.obj",
+                    "material": "suzanne_painted.json"
+                }
+            },
 
-        {
-            "loc": [-4,0,0],
-            "rotate": [0,-1,0],
-            "rot": [0,180,0],
-            "geometry": {
-                "mesh": "suzanne.obj",
-                "material": "suzanne_cardboard.json"
-            }
-        },
-        {
-            "loc": [0,-2,15],
-            "sca": [100,1,100],
-            "geometry": {
-                "mesh": "uv_test.obj",
-                "material": "uv_test.json"
-            }
-        },
+            {
+                "loc": [-4,0,0],
+                "rotate": [0,-1,0],
+                "rot": [0,180,0],
+                "geometry": {
+                    "mesh": "suzanne.obj",
+                    "material": "suzanne_cardboard.json"
+                }
+            },
+            {
+                "loc": [0,-2,15],
+                "sca": [100,1,100],
+                "geometry": {
+                    "mesh": "uv_test.obj",
+                    "material": "uv_test.json"
+                }
+            },
 
+            {
+                "rot": [0,180,0],
+                "camera": {
+                    "fov": 60
+                },
+                "loc": [0,0,-8]
+            },
+
+            {
+                "loc": [0,8,8],
+                "children": [{
+                    "rot": [-60,30,0],
+                    "rotc": [-40,0,0],
+                    "directional_light": {
+                        "color": [1,1,0.5],
+                        "intensity": 0.75,
+                        "shadow_radius": 10,
+                        "shadow_resolution": 1024
+                    }
+                }]
+            },
+            {
+                "rot": [-60, 60,0],
+                "loc": [0,8,8],
+                "directional_light": {
+                    "color": [0.5,1,1],
+                    "intensity": 0.75,
+                    "shadow_radius": 10,
+                    "shadow_resolution": 1024
+                }
+            }
+        ]},
         {
             "rot": [0,180,0],
             "camera": {
                 "fov": 60
             },
             "loc": [0,0,-8]
-        },
-
-        {
-            "loc": [0,8,8],
-            "children": [{
-                "rot": [-60,30,0],
-                "rotc": [-40,0,0],
-                "directional_light": {
-                    "color": [1,1,1],
-                    "intensity": 1.2,
-                    "shadow_radius": 10,
-                    "shadow_resolution": 1024
-                }
-            }]
-        },
-        {
-            "rot": [-60, 60,0],
-            "loc": [0,8,8],
-            "directional_light": {
-                "color": [1,1,1],
-                "intensity": 1.2,
-                "shadow_radius": 10,
-                "shadow_resolution": 1024
-            }
         }
     ]
 }
