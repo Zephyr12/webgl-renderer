@@ -36,10 +36,15 @@ $(document).ready(() => {
     tex  = new TextureLoader();
     mesh = new MeshLoader();
     scene = new SceneLoader();
+    scene.load_scene("monkey_pl.json");
+    scene.load_scene("monkey_dl.json");
 
-    $("#load_button").on("click", async () => {
-        await scene.load_scene($("#select").val());
-        scene.render();
+
+    $("#load_button").on("click", () => {
+        let p = scene.load_scene($("#select").val());
+        p.then(()=> {
+            requestAnimationFrame(()=>scene.render());
+        });
     });
 
     document.addEventListener('keydown', function(event) {

@@ -1,4 +1,8 @@
-# How to Use
+# What is this?
+A webgl based deferred rendering engine that supports asset loading,
+cook-torrance lighting, model loading, variance shadowmapping
+
+[[#]] How to Use
 
 * Navigate to the `index.html` file in your web browser.
 * Select the scene you want to load and click the render button
@@ -12,3 +16,6 @@
 * Model Loading:                http://www.assimp.org/
 * Variance Shadow Mapping:      http://www.punkuser.net/vsm/vsm_paper.pdf
 * Everything: http://codeflow.org/entries/2012/aug/25/webgl-deferred-irradiance-volumes/
+
+# Screenshots
+
