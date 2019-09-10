@@ -2,7 +2,7 @@
 A webgl based deferred rendering engine that supports asset loading,
 cook-torrance lighting, model loading, variance shadowmapping
 
-[[#]] How to Use
+# How to Use
 
 * Navigate to the `index.html` file in your web browser.
 * Select the scene you want to load and click the render button
@@ -19,3 +19,8 @@ cook-torrance lighting, model loading, variance shadowmapping
 
 # Screenshots
 
+## Point Lights
+![Point Lighting](point.png)
+
+## Directional  Lights
+![Directional Lighting](directional.png)
